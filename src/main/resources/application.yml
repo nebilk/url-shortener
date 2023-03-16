@@ -1,0 +1,24 @@
+server:
+  servlet:
+    context-path: /url-shortener
+
+spring:
+  cache:
+    type: redis
+    redis:
+      use-key-prefix: true
+  redis:
+    port: ${REDIS_LOCAL_PORT}
+    password: ${REDIS_PASSWORD}
+    host: ${REDIS_LOCAL_HOST}
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    url: ${POSTGRESQL_LOCAL_URL}
+    username: ${POSTGRESQL_USER}
+    password: ${POSTGRESQL_PASSWORD}

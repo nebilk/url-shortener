@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  redis-stack:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - db:/var/lib/redis
+    container_name: redis
+    networks:
+      - redis-network
+  postgresql:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=shortener_db
+      - POSTGRES_PASSWORD=123456
+#      - POSTGRES_USER=postgres
+    ports:
+      - '5432:5432'
+    networks:
+      - postgresql-compose-network
+    volumes:
+      - db:/var/lib/postgresql
+    container_name: postgresql
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - '5050:80'
+    networks:
+      - postgresql-compose-network
+    restart: unless-stopped
+  app:
+    depends_on:
+      - redis-stack
+      - postgresql
+    build: .
+    image: url-shortener
+    restart: on-failure
+    container_name: url-shortener
+    networks:
+      - postgresql-compose-network
+      - redis-network
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=$POSTGRESQL_URL
+      - SPRING_DATASOURCE_USERNAME=$POSTGRESQL_USER
+      - SPRING_DATASOURCE_PASSWORD=$POSTGRESQL_PASSWORD
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_REDIS_HOST=$REDIS_HOST
+      - SPRING_REDIS_PORT=$REDIS_DOCKER_PORT
+      - SPRING_REDIS_PASSWORD=$REDIS_PASSWORD
+
+
+volumes:
+  db:
+  pgadmin:
+
+networks:
+  postgresql-compose-network:
+    driver: bridge
+  redis-network:
+    driver: bridge
